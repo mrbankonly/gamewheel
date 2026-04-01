@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spin Wheel</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="wheel-panel">
+        <div class="panel-toolbar">
+          <button id="openHistoryButton" class="toolbar-button history-toggle" type="button">
+            History
+          </button>
+          <button id="openSettingsButton" class="toolbar-button settings-toggle" type="button">
+            Settings
+          </button>
+        </div>
+
+        <div class="panel-copy">
+          <p class="eyebrow">Lucky Picker</p>
+          <h1>Spin the wheel</h1>
+          <p class="subcopy">
+            Add your own choices, remove old ones, then hit spin to pick a
+            winner.
+          </p>
+        </div>
+
+        <div class="wheel-stage">
+          <div class="wheel-wrap">
+            <div class="pointer" aria-hidden="true"></div>
+            <canvas
+              id="wheel"
+              width="560"
+              height="560"
+              aria-label="Spin wheel"
+            ></canvas>
+            <button id="spinButton" class="spin-button" type="button">
+              Spin!
+            </button>
+          </div>
+        </div>
+
+        <div class="result-card">
+          <span class="result-label">Selected item</span>
+          <strong id="resultText">Press spin to begin</strong>
+        </div>
+        <p id="queueIndicator" class="queue-indicator" hidden>
+          Queue: <span id="queueRemaining">0</span> remaining
+        </p>
+      </section>
+    </main>
+
+    <template id="itemTemplate">
+      <li class="item-row">
+        <span class="item-name"></span>
+        <button class="delete-button" type="button">Delete</button>
+      </li>
+    </template>
+
+    <template id="queueItemTemplate">
+      <li class="item-row queue-row">
+        <span class="queue-position"></span>
+        <span class="item-name"></span>
+        <button class="delete-button" type="button">Remove</button>
+      </li>
+    </template>
+
+    <div id="settingsOverlay" class="settings-overlay" hidden>
+      <div class="settings-backdrop"></div>
+      <div
+        class="settings-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="settingsTitle"
+      >
+        <div class="settings-modal-head">
+          <div class="settings-head">
+            <p class="eyebrow">Settings</p>
+            <h2 id="settingsTitle">Manage Wheel</h2>
+            <p class="settings-copy">
+              Add or delete items, and set up a winner queue to predetermine
+              spin outcomes in order.
+            </p>
+          </div>
+          <button
+            id="closeSettingsButton"
+            class="icon-close-button"
+            type="button"
+            aria-label="Close settings"
+          >
+            &times;
+          </button>
+        </div>
+
+        <div class="settings-layout">
+          <section class="settings-card">
+            <h3>Add Item</h3>
+            <form id="itemForm" class="add-form">
+              <label class="input-label" for="itemInput">New item</label>
+              <div class="input-row">
+                <input
+                  id="itemInput"
+                  name="item"
+                  type="text"
+                  maxlength="40"
+                  placeholder="Enter an item"
+                  autocomplete="off"
+                />
+                <button type="submit" class="add-button">Add</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="settings-card settings-card-list">
+            <h3>Winner Queue</h3>
+            <p id="queueModeText" class="setting-note queue-mode-text">
+              No queued winners. Spins are random.
+            </p>
+            <label class="input-label" for="queueWinnerSelect">Add to queue</label>
+            <div class="input-row">
+              <select id="queueWinnerSelect" class="select-input">
+                <option value="">Choose an item...</option>
+              </select>
+              <button id="addToQueueButton" type="button" class="add-button">Add</button>
+            </div>
+            <ul id="queueList" class="item-list queue-list" aria-live="polite"></ul>
+          </section>
+
+          <section class="settings-card settings-card-list">
+            <div class="item-summary">
+              <span>Items on wheel</span>
+              <strong id="itemCount">0</strong>
+            </div>
+            <ul id="itemList" class="item-list" aria-live="polite"></ul>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <div id="historyOverlay" class="history-overlay" hidden>
+      <div class="history-backdrop"></div>
+      <div
+        class="history-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="historyTitle"
+      >
+        <div class="history-modal-head">
+          <div class="history-head">
+            <p class="eyebrow">History</p>
+            <h2 id="historyTitle">Spin Results</h2>
+            <p class="settings-copy">A record of all past spin outcomes.</p>
+          </div>
+          <button
+            id="closeHistoryButton"
+            class="icon-close-button"
+            type="button"
+            aria-label="Close history"
+          >
+            &times;
+          </button>
+        </div>
+        <div class="history-content">
+          <div class="history-summary">
+            <span>Total spins</span>
+            <strong id="historyCount">0</strong>
+          </div>
+          <ul id="historyList" class="item-list history-list" aria-live="polite"></ul>
+          <p id="historyEmpty" class="setting-note" hidden>No spins recorded yet.</p>
+          <button id="clearHistoryButton" class="delete-button clear-history-button" type="button" hidden>
+            Clear History
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="winnerOverlay" class="winner-overlay" hidden>
+      <div class="winner-backdrop"></div>
+      <div class="winner-modal" role="dialog" aria-modal="true" aria-labelledby="winnerTitle">
+        <div class="burst burst-a"></div>
+        <div class="burst burst-b"></div>
+        <div class="confetti confetti-a"></div>
+        <div class="confetti confetti-b"></div>
+        <div class="confetti confetti-c"></div>
+        <p class="winner-tag">Winner</p>
+        <h2 id="winnerTitle">Congratulations!</h2>
+        <strong id="winnerName" class="winner-name">Spin result</strong>
+        <button id="closeWinnerButton" class="close-winner-button" type="button">
+          Close
+        </button>
+      </div>
+    </div>
+
+    <script src="./script.js"></script>
+  </body>
+</html>
